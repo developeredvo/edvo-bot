@@ -246,6 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
       icon: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M2 13h20"/>',
     },
     {
+      title: 'Employee Hub',
+      prompt: 'Sa Cebuano, gamita ang EMPLOYEE HUB nga dokumento sa Google Drive ug ihatag ang mubo nga giya sa attendance, HMO, probation ug regularization, ug resignation. Klaroha ang status sa bisan unsang draft nga policy. Kung dili makita ang dokumento, isulti kana.',
+      className: 'quick-action-employee-hub',
+      description: 'Giya sa attendance, HMO, regularization ug uban pang pangutana sa trabaho.',
+      icon: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v3ZM16 4a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v3"/>',
+    },
+    {
       title: 'Company Documents',
       description: 'Access important company documents.',
       prompt: 'Summarize the key company policies and documents I should know about.',
@@ -262,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const appendQuickActions = () => {
     const grid = document.createElement('div');
     grid.className = 'quick-actions';
-    grid.innerHTML = quickActions.map((action, index) => `<button class="quick-action" type="button" data-index="${index}"><span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${action.icon}</svg></span><span class="quick-action-copy"><strong>${action.title}</strong><small>${action.description}</small></span><span class="quick-action-arrow" aria-hidden="true">›</span></button>`).join('');
+    grid.innerHTML = quickActions.map((action, index) => `<button class="quick-action ${action.className || ''}" type="button" data-index="${index}"><span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${action.icon}</svg></span><span class="quick-action-copy"><strong>${action.title}</strong><small>${action.description}</small></span><span class="quick-action-arrow" aria-hidden="true">›</span></button>`).join('');
     chatMessages.appendChild(grid);
   };
 
