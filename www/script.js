@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateDialog = document.getElementById('updateDialog');
   const updateMessage = document.getElementById('updateMessage');
   const updateNow = document.getElementById('updateNow');
-  const updateLater = document.getElementById('updateLater');
   const deleteDocDialog = document.getElementById('deleteDocDialog');
   const deleteDocMessage = document.getElementById('deleteDocMessage');
   const deleteDocCancel = document.getElementById('deleteDocCancel');
@@ -51,11 +50,25 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const signInButton = loginForm.querySelector('.unlock-btn');
+  let updateRequired = false;
 
   // Live updates: web-only releases are applied in place (no APK reinstall) when the
   // installed native shell is new enough. Without this call the plugin rolls back the bundle.
   const liveUpdater = window.Capacitor?.Plugins?.CapacitorUpdater;
   liveUpdater?.notifyAppReady().catch(() => {});
+  const updateNoticeKey = 'edvo-bot-update-notice';
+  const showUpdateNotice = (version, message) => {
+    if (localStorage.getItem(updateNoticeKey) === version) return;
+    window.alert(message);
+    localStorage.setItem(updateNoticeKey, version);
+  };
+
+  // Older bundles can install this update before they know how to show a notice.
+  liveUpdater?.current().then(({ native }) => {
+    if (compareVersions(appVersion, native) > 0) {
+      showUpdateNotice(appVersion, `EDVO BOT installed the required update to version ${appVersion} automatically.`);
+    }
+  }).catch(() => {});
 
   // CI publishes the web bundle as edvo-bot-web-min-native-<version>.zip, where <version>
   // (from native-version.txt) is the oldest APK that can run it.
@@ -69,8 +82,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const { native } = await liveUpdater.current();
       if (compareVersions(native, minNative) < 0) return false;
-      showLoading('Updating EDVO Bot…');
-      const bundle = await liveUpdater.download({ url: bundleAsset.browser_download_url, version: release.tag_name.replace(/^v/i, ''), checksum });
+      const version = release.tag_name.replace(/^v/i, '');
+      showUpdateNotice(version, `EDVO BOT update required. Version ${version} will install automatically. The app will reload after the update.`);
+      showLoading('Installing the required EDVO BOT update…');
+      const bundle = await liveUpdater.download({ url: bundleAsset.browser_download_url, version, checksum });
       await liveUpdater.set({ id: bundle.id });
       return true;
     } catch {
@@ -93,20 +108,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await applyLiveUpdate(release)) return;
       const apk = (release.assets || []).find((asset) => asset.name === 'edvo-bot.apk');
       if (!apk || !apk.browser_download_url) return;
-      updateMessage.textContent = `Version ${release.tag_name.replace(/^v/i, '')} is available. Update to get the latest improvements.`;
+      updateRequired = true;
+      updateMessage.textContent = `Install EDVO BOT ${release.tag_name.replace(/^v/i, '')} to continue. Select Update now to download the Android installer, then open it to finish updating.`;
       updateNow.href = apk.browser_download_url;
       updateDialog.classList.remove('hidden');
+      updateNow.focus();
     } catch {
-      // Updates are optional; a network failure must not block the app.
+      // Keep sign-in available if the release check could not confirm an update.
     } finally {
-      signInButton.disabled = false;
-      signInButton.textContent = 'Sign in →';
+      signInButton.disabled = updateRequired;
+      signInButton.textContent = updateRequired ? 'Update required' : 'Sign in →';
     }
   };
 
   checkForAppUpdate();
-
-  updateLater.addEventListener('click', () => updateDialog.classList.add('hidden'));
 
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
@@ -247,9 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     {
       title: 'Employee Hub',
-      prompt: 'Sa Cebuano, gamita ang EMPLOYEE HUB nga dokumento sa Google Drive ug ihatag ang mubo nga giya sa attendance, HMO, probation ug regularization, ug resignation. Klaroha ang status sa bisan unsang draft nga policy. Kung dili makita ang dokumento, isulti kana.',
-      className: 'quick-action-employee-hub',
-      description: 'Giya sa attendance, HMO, regularization ug uban pang pangutana sa trabaho.',
+      prompt: 'In English, summarize the EMPLOYEE HUB document in Google Drive, covering attendance, HMO, probation and regularization, and resignation. Identify any draft policies and say if the document is unavailable.',
+      description: 'Find guidance on workplace policies, benefits, and employment.',
       icon: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v3ZM16 4a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v3"/>',
     },
     {
@@ -269,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const appendQuickActions = () => {
     const grid = document.createElement('div');
     grid.className = 'quick-actions';
-    grid.innerHTML = quickActions.map((action, index) => `<button class="quick-action ${action.className || ''}" type="button" data-index="${index}"><span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${action.icon}</svg></span><span class="quick-action-copy"><strong>${action.title}</strong><small>${action.description}</small></span><span class="quick-action-arrow" aria-hidden="true">›</span></button>`).join('');
+    grid.innerHTML = quickActions.map((action, index) => `<button class="quick-action" type="button" data-index="${index}"><span class="quick-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${action.icon}</svg></span><span class="quick-action-copy"><strong>${action.title}</strong><small>${action.description}</small></span><span class="quick-action-arrow" aria-hidden="true">›</span></button>`).join('');
     chatMessages.appendChild(grid);
   };
 

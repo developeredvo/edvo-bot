@@ -467,16 +467,6 @@ input {
 
 .quick-action:active { transform: scale(0.98); }
 
-.quick-action.quick-action-employee-hub {
-  border-color: #39e9a5;
-  background: linear-gradient(145deg, #12362b, #0b161d);
-  box-shadow: 0 0 14px #39e9a533;
-}
-
-.quick-action-employee-hub .quick-action-icon {
-  color: #71ffca;
-}
-
 .quick-action-icon {
   display: grid;
   place-items: center;
