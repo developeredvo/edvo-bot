@@ -171,7 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const bubble = document.createElement('div');
     bubble.className = `bubble ${role === 'assistant' ? 'assistant-bubble' : 'user-bubble'}`;
-    bubble.textContent = message;
+    if (role === 'assistant') {
+      renderBotReply(bubble, message);
+    } else {
+      bubble.textContent = message;
+    }
     const messageContent = document.createElement('div');
     messageContent.className = `message-content ${role === 'assistant' ? 'assistant-content' : 'user-content'}`;
     const timestamp = document.createElement('time');
@@ -183,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     row.appendChild(messageContent);
     chatMessages.appendChild(row);
     scrollChatToLatest();
-    return { row, bubble };
   };
 
   const showTypingIndicator = () => {
@@ -205,20 +208,47 @@ document.addEventListener('DOMContentLoaded', () => {
     return row;
   };
 
-  const typeBotReply = (message, onComplete) => {
-    const { row, bubble } = appendChatMessage('assistant', '');
-    bubble.classList.add('is-typing-reply');
-    let characterIndex = 0;
-    const typingInterval = window.setInterval(() => {
-      characterIndex += 1;
-      bubble.textContent = message.slice(0, characterIndex);
-      scrollChatToLatest();
-      if (characterIndex >= message.length) {
-        window.clearInterval(typingInterval);
-        bubble.classList.remove('is-typing-reply');
-        onComplete();
+  const renderBotReply = (bubble, message) => {
+    const content = document.createDocumentFragment();
+    let list;
+    const addText = (element, text) => {
+      for (const part of text.split(/(\*\*[^*\n]+\*\*)/g)) {
+        if (!part) continue;
+        if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+          const strong = document.createElement('strong');
+          strong.textContent = part.slice(2, -2);
+          element.append(strong);
+        } else {
+          element.append(document.createTextNode(part));
+        }
       }
-    }, 14);
+    };
+
+    for (const line of message.split(/\r?\n/)) {
+      const text = line.trim();
+      const item = text.match(/^(?:([-*•])|(\d+)\.)\s+(.+)$/);
+      if (item) {
+        const tag = item[2] ? 'ol' : 'ul';
+        if (list?.localName !== tag) {
+          list = document.createElement(tag);
+          if (item[2]) list.start = Number(item[2]);
+          content.append(list);
+        }
+        const entry = document.createElement('li');
+        addText(entry, item[3]);
+        list.append(entry);
+        continue;
+      }
+      list = undefined;
+      if (!text) continue;
+      const heading = text.match(/^#{1,6}\s+(.+)$/);
+      const block = document.createElement(heading ? 'h3' : 'p');
+      addText(block, heading ? heading[1] : text);
+      content.append(block);
+    }
+
+    bubble.classList.add('formatted-reply');
+    bubble.replaceChildren(content);
   };
 
   const getDisplayName = (name, emailValue) => {
@@ -446,20 +476,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const typing = showTypingIndicator();
     const finishTurn = (replyText) => {
       typing.remove();
-      typeBotReply(replyText, () => {
-        chatInput.disabled = false;
-        chatSendButton.disabled = false;
-        chatInput.focus();
-      });
+      appendChatMessage('assistant', replyText);
+      chatInput.disabled = false;
+      chatSendButton.disabled = false;
+      chatInput.focus();
     };
     try {
       const response = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentSession.token}` },
-        body: JSON.stringify({ message, history: chatHistory }),
+        body: JSON.stringify({ message, history: chatHistory, replyFormat: 'markdown' }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
+      if (!response.ok || typeof data.reply !== 'string') {
         finishTurn(data.error || 'Something went wrong reaching the assistant. Please try again.');
         return;
       }

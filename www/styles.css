@@ -428,6 +428,33 @@ input {
   border-bottom-left-radius: 10px;
 }
 
+.formatted-reply {
+  overflow-wrap: anywhere;
+}
+
+.formatted-reply > * {
+  margin: 0;
+}
+
+.formatted-reply > * + * {
+  margin-top: 0.65em;
+}
+
+.formatted-reply h3 {
+  color: #17483b;
+  font-size: 1.05em;
+  line-height: 1.35;
+}
+
+.formatted-reply ul,
+.formatted-reply ol {
+  padding-inline-start: 1.4em;
+}
+
+.formatted-reply li + li {
+  margin-top: 0.3em;
+}
+
 .user-bubble {
   background: linear-gradient(135deg, #67e5b6, #4bd6a5);
   color: #071711;
@@ -532,16 +559,6 @@ input {
 @keyframes typing-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: .45; }
   30% { transform: translateY(-5px); opacity: 1; }
-}
-
-.is-typing-reply::after {
-  content: '▋';
-  margin-left: 2px;
-  color: var(--green-deep);
-  animation: reply-caret .65s step-end infinite;
-}
-
-@keyframes reply-caret { 50% { opacity: 0; } }
 }
 
 .chat-input-bar {
