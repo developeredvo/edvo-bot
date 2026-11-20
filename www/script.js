@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     {
       title: 'Employee Hub',
-      prompt: 'In English, summarize the EMPLOYEE HUB document in Google Drive, covering attendance, HMO, probation and regularization, and resignation. Identify any draft policies and say if the document is unavailable.',
+      prompt: 'What should I know about attendance, HMO, probation and regularization, and resignation at EDVO.X?',
       description: 'Find guidance on workplace policies, benefits, and employment.',
       icon: '<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v3ZM16 4a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v3"/>',
     },
